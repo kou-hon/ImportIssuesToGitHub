@@ -65,7 +65,7 @@ foreach (var issue in issues)
     {
         var commentBody = new
         {
-            body = $"Created by:{issue.user.login}\r\nCreated at:{issue.created_at.ToLocalTime()} (JST)\r\n\r\n" + comment.body
+            body = $"Created by:{comment.user.login}\r\nCreated at:{comment.created_at.ToLocalTime()} (JST)\r\n\r\n" + comment.body
         };
         var commentContent = new StringContent(JsonSerializer.Serialize(commentBody));
         commentContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
