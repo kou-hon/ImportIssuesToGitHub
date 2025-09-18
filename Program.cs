@@ -1,7 +1,6 @@
 ﻿
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Xml.Linq;
 
 Console.WriteLine("argment:GitBucketExportJsonFile, RepositoryPath(Owner/Repo), GitHubToken");
 
@@ -33,13 +32,24 @@ foreach (var issue in issues)
 
     //https://docs.github.com/ja/rest/issues/issues?apiVersion=2022-11-28#create-an-issue
 
+    var title = "[FromGitBucket] " + issue.title;
+    var body = $"Created by:{issue.user.login}\r\nCreated at:{issue.created_at.ToLocalTime()} (JST)\r\n\r\n" + issue.body;
+    if (issue.merged is not null)
+    {
+        //PullRequestの場合はラベルをつける
+        title = $"[FromGitBucket][PullRequest]{(issue.merged is true ? "[Merged]" : "")}" + " " + issue.title;
+        body = $"Request:{issue.head?.@ref} to {issue.@base?.@ref}\r\n"
+            + $"Created by:{issue.user.login}\r\nCreated at:{issue.created_at.ToLocalTime()} (JST)\r\n"
+            + $"{(issue.merged is true ? $"Merged at:{issue.merged_at.Value.ToLocalTime()} (JST)\r\nMerged by:{issue.merged_by.login}" : "Not merged")}\r\n\r\n"
+            + issue.body;
+    }
+
     // Issue作成用のJSONボディ
     var issueBody = new
     {
-        title = "[FromGitBucket]" + issue.title,
-        body = $"Created by:{issue.user.login}\r\nCreated at:{issue.created_at.ToLocalTime()} (JST)\r\n\r\n" + issue.body,
+        title = title,
+        body = body,
     };
-
     var jsonContent = new StringContent(JsonSerializer.Serialize(issueBody));
     jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
@@ -97,6 +107,7 @@ foreach (var issue in issues)
 Console.ReadLine();
 
 //GitBucketJson
-record GitBucketIssue(int number, string title, string body, GitBucketUser user, DateTimeOffset created_at, List<GitBucketComment> comments, string state);
+record GitBucketIssue(int number, string title, string body, GitBucketUser user, DateTimeOffset created_at, List<GitBucketComment> comments, string state, bool? merged, DateTimeOffset? merged_at, GitBucketUser merged_by, GitBucketMerge? head, GitBucketMerge? @base);
 record GitBucketComment(string body, GitBucketUser user, DateTimeOffset created_at);
 record GitBucketUser(string login);
+record GitBucketMerge(string label, string @ref, string sha, GitBucketUser user);
