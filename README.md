@@ -1,0 +1,2 @@
+# ImportIssuesToGitHub
+JSONデータからIssue/PullRequestをインポート
