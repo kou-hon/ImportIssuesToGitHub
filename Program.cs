@@ -2,7 +2,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-Console.WriteLine("argment:GitBucketExportJsonFile, RepositoryPath(Owner/Repo), GitHubToken");
+Console.WriteLine("argment:GitBucketExportJsonFile, RepositoryPath(Owner/Repo), GitHubToken, offset, issueNum");
 
 string jsonFile = args[0];
 string repoPath = args[1];
@@ -10,9 +10,12 @@ string token = args[2];
 if (args.Length < 3)
 {
     Console.WriteLine("Not enough arguments");
-    Console.WriteLine("e.g. hoge.json Owner/Repo hoghogeToken");
+    Console.WriteLine("e.g. hoge.json Owner/Repo hoghogeToken, 0, 100");
+    Console.WriteLine("e.g. hoge.json Owner/Repo hoghogeToken, 100, 100");
     return;
 }
+int offset = args.Length > 3 ? int.Parse(args[3]) : 0;
+int num = args.Length > 4 ? int.Parse(args[4]) : 100;
 
 string gitHubApiUrlBase = $"https://api.github.com/repos/{repoPath}/";
 
@@ -26,9 +29,37 @@ var json = File.ReadAllText(jsonFile);
 var issues = JsonSerializer.Deserialize<List<GitBucketIssue>>(json)!.OrderBy(i => i.number);
 
 //GitHubにすべてIssueとして登録する(PullRequestについてもIssueとして記録)
-foreach (var issue in issues)
+foreach (var issue in issues.Skip(offset).Take(num))
 {
-    //ToDo:すでに同じタイトルのIssueがある場合はスキップするなどの処理を入れる
+    //すでに同じタイトルのIssueがある場合はスキップするなどの処理を入れる
+    var checkRequest = new HttpRequestMessage(HttpMethod.Get, $"{gitHubApiUrlBase}issues/{issue.number}");
+    checkRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+    checkRequest.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+
+    var checkResponse = await client.SendAsync(checkRequest);
+    if (checkResponse.IsSuccessStatusCode)
+    {
+        var checkContent = await checkResponse.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(checkContent);
+        var existingTitle = doc.RootElement.GetProperty("title").GetString();
+        Console.WriteLine($"Issue #{issue.number} already exist: {existingTitle}");
+        break;
+    }
+
+    //登録しているIssueの前のIssueが存在しない場合は、処理を中断する
+    if (issue.number > 1)
+    {
+        var prevRequest = new HttpRequestMessage(HttpMethod.Get, $"{gitHubApiUrlBase}issues/{issue.number - 1}");
+        prevRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        prevRequest.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+        var prevResponse = await client.SendAsync(prevRequest);
+        if (!prevResponse.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"Previous issue #{issue.number - 1} does not exist. Stopping import.");
+            break;
+        }
+    }
+
 
     //https://docs.github.com/ja/rest/issues/issues?apiVersion=2022-11-28#create-an-issue
 
@@ -56,8 +87,10 @@ foreach (var issue in issues)
     var response = await client.PostAsync($"{gitHubApiUrlBase}issues", jsonContent);
     if (!response.IsSuccessStatusCode)
     {
+        var errorContent = await response.Content.ReadAsStringAsync();
         Console.WriteLine($"Failed to create issue: {response.StatusCode}");
-        continue;       //とりあえず次へ行く
+        Console.WriteLine($"Response body: {errorContent}");
+        break;
     }
 
     //https://docs.github.com/ja/rest/issues/comments?apiVersion=2022-11-28#create-an-issue-comment
@@ -73,8 +106,10 @@ foreach (var issue in issues)
         var res = await client.PostAsync($"{gitHubApiUrlBase}issues/{issue.number}/comments", commentContent);
         if (!res.IsSuccessStatusCode)
         {
+            var errorContent = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Failed to post comment to issue #{issue.number}: {response.StatusCode}");
-            continue;
+            Console.WriteLine($"Response body: {errorContent}");
+            break;
         }
     }
 
@@ -94,16 +129,20 @@ foreach (var issue in issues)
         {
             Content = closedContent
         };
+
         var res = await client.SendAsync(patchRequest);
         if (!res.IsSuccessStatusCode)
         {
+            var errorContent = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Failed to update issue #{issue.number}: {res.StatusCode}");
-            continue;
+            Console.WriteLine($"Response body: {errorContent}");
+            break;
         }
     }
     Console.WriteLine($"Imported issue #{issue.number} - {issue.title} with {issue.comments.Count} comments.");
 }
 
+Console.WriteLine($"Import ended.");
 Console.ReadLine();
 
 //GitBucketJson
