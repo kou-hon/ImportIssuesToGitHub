@@ -6,7 +6,8 @@ JSONデータからIssue/PullRequestをインポート
 
 ## 事前準備
 
-リポジトリアクセス可能なGitHubのTokenを取得しておくこと
+[ここ](https://github.com/settings/tokens/new)からリポジトリアクセス可能なGitHubのTokenを取得しておくこと  
+scopeはrepoのみでOK
 
 ## 注意点
 
@@ -16,7 +17,7 @@ GitHubにはAPIレート制限が存在する
 
 30分ごとに50程度のインポートであれば問題なさそう
 
-https://docs.github.com/ja/apps/creating-github-apps/registering-a-github-app/rate-limits-for-github-apps
+参考）https://docs.github.com/ja/apps/creating-github-apps/registering-a-github-app/rate-limits-for-github-apps
 
 ## 使い方
 
