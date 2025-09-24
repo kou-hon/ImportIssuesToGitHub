@@ -17,7 +17,9 @@ GitHubにはAPIレート制限が存在する
 
 30分ごとに50程度のインポートであれば問題なさそう
 
-参考）https://docs.github.com/ja/apps/creating-github-apps/registering-a-github-app/rate-limits-for-github-apps
+参考）
+- https://docs.github.com/ja/apps/creating-github-apps/registering-a-github-app/rate-limits-for-github-apps
+- https://docs.github.com/ja/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2022-11-28#about-secondary-rate-limits
 
 ## 使い方
 
