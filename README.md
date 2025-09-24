@@ -27,6 +27,6 @@ GitHubにはAPIレート制限が存在する
 $ ImportIssuesToGitHub.exe C:\OWNER_Repo_issues_250918071514.json GitHubOwner/GitHubRepo ghp_hogehogetoken 100 50
 ```
 
-Exportした'C:\OWNER_Repo_issues_250918071514.json'の内容を`https://github.com/GitHubOwner/GitHubRepo/`に登録する例  
+Exportした`C:\OWNER_Repo_issues_250918071514.json`の内容を`https://github.com/GitHubOwner/GitHubRepo/`に登録する例  
 issue番号101から50個を登録する
 
