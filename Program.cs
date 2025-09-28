@@ -70,6 +70,7 @@ foreach (var issue in issues.Skip(offset).Take(num))
         //PullRequestの場合はラベルをつける
         title = $"[FromGitBucket][PullRequest]{(issue.merged is true ? "[Merged]" : "")}" + " " + issue.title;
         body = $"Request:{issue.head?.@ref} to {issue.@base?.@ref}\r\n"
+            + $"Ref:{issue.head?.sha} to {issue.@base?.sha}\r\n"
             + $"Created by:{issue.user.login}\r\nCreated at:{issue.created_at.ToLocalTime()} (JST)\r\n"
             + $"{(issue.merged is true ? $"Merged at:{issue.merged_at!.Value.ToLocalTime()} (JST)\r\nMerged by:{issue.merged_by.login}" : "Not merged")}\r\n\r\n"
             + issue.body;
