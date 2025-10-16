@@ -1,5 +1,4 @@
-﻿
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text.Json;
 
 Console.WriteLine("argment:GitBucketExportJsonFile, RepositoryPath(Owner/Repo), GitHubToken, offset, issueNum");
@@ -69,10 +68,10 @@ foreach (var issue in issues.Skip(offset).Take(num))
     {
         //PullRequestの場合はラベルをつける
         title = $"[FromGitBucket][PullRequest]{(issue.merged is true ? "[Merged]" : "")}" + " " + issue.title;
-        body = $"Request:{issue.head?.@ref} to {issue.@base?.@ref}\r\n"
-            + $"Ref:{issue.head?.sha} to {issue.@base?.sha}\r\n"
-            + $"Created by:{issue.user.login}\r\nCreated at:{issue.created_at.ToLocalTime()} (JST)\r\n"
-            + $"{(issue.merged is true ? $"Merged at:{issue.merged_at!.Value.ToLocalTime()} (JST)\r\nMerged by:{issue.merged_by.login}" : "Not merged")}\r\n\r\n"
+        body = $"Request: {issue.head?.@ref} to {issue.@base?.@ref}\r\n"
+            + $"Ref: {issue.head?.sha} to {issue.@base?.sha}\r\n"
+            + $"Created by: {issue.user.login}\r\n Created at:{issue.created_at.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss zzz")} (JST)\r\n"
+            + $"{(issue.merged is true ? $"Merged at: {issue.merged_at!.Value.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss zzz")} (JST)\r\nMerged by: {issue.merged_by.login}" : "Not merged")}\r\n\r\n"
             + issue.body;
     }
 
@@ -99,7 +98,7 @@ foreach (var issue in issues.Skip(offset).Take(num))
     {
         var commentBody = new
         {
-            body = $"Created by:{comment.user.login}\r\nCreated at:{comment.created_at.ToLocalTime()} (JST)\r\n\r\n" + comment.body
+            body = $"Created by: {comment.user.login}\r\nCreated at: {comment.created_at.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss zzz")} (JST)\r\n\r\n" + comment.body
         };
         var commentContent = new StringContent(JsonSerializer.Serialize(commentBody));
         commentContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
